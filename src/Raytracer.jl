@@ -3,46 +3,54 @@ include("HittableList.jl")
 include("Sphere.jl")
 include("Camera.jl")
 
-function rayColor(r::Ray, world::Hittable, rec::HitRecord, tempRec::HitRecord) ::Vec3
+function rayColor(r::Ray, world::Hittable, depth, rec::HitRecord, tempRec::HitRecord) ::Vec3
     #rec = HitRecord()
-    if hit(world, r, 0.0, typemax(Float32), rec, tempRec)
-        return 0.5 * Vec3(x(rec.normal) + 1.0, y(rec.normal) + 1.0, z(rec.normal) + 1.0)
-    else
-        unitDirection = unitVector(direction(r))
-        t = 0.5 * (y(unitDirection) + 1.0)
-        return (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
+    if depth <= 0
+        return Vec3(0.0)
     end
+
+    if hit(world, r, 0.001, typemax(Float32), rec, tempRec)
+        scattered, attenuation, isScattered = scatter(rec.material, r, rec)
+        if isScattered
+            return attenuation * rayColor(scattered, world, depth-1, rec, tempRec)
+        end
+        return Vec3(0.0)
+    end
+
+    unitDirection = unitVector(direction(r))
+    t = 0.5 * (y(unitDirection) + 1.0)
+    return (1.0 - t) * Vec3(1.0, 1.0, 1.0) + t * Vec3(0.5, 0.7, 1.0)
 end
 
 function main()
-    nx, ny, ns = 200, 100, 100
-    io = open("image.ppm", "w")
+    nx, ny = 200, 100
+    ns = 100
+    maxDepth = 50
+    io = open("images/chapter11.ppm", "w")
     println(io, "P3\n", nx, " ", ny, "\n255\n")
 
-    world = HittableList{2}()
-    world[1] = Sphere(Vec3(0.0,0.0,-1.0), 0.5)
-    world[2] = Sphere(Vec3(0.0,-100.5, -1.0), 100)
+    world = HittableList()
+    push!(world, Sphere(Vec3(0.0,0.0,-1.0), 0.5, Lambertian(Vec3(0.1, 0.2, 0.5))))
+    push!(world, Sphere(Vec3(0.0,-100.5, -1.0), 100, Lambertian(Vec3(0.8, 0.8, 0.0))))
+
+    push!(world, Sphere(Vec3(1.0,0.0,-1.0), 0.5, Metal(Vec3(0.8, 0.6, 0.2), 0.0)))
+    push!(world, Sphere(Vec3(-1.0,0.0,-1.0), 0.5, Dielectric(1.5)))
+    push!(world, Sphere(Vec3(-1.0,0.0,-1.0), -0.45, Dielectric(1.5)))
 
     cam = Camera()
     # Preallocating since mutable structs take a lot of memory
     rec = HitRecord()
     tempRec = HitRecord()
-
-    for j in ny:-1:1
-        for i in 1:nx
+    for j = ny:-1:1
+        for i = 1:nx
             col = Vec3(0.0)
-            for _ in 1:ns
+            for _ = 1:ns
                 u, v = (i + rand()) / nx, (j + rand()) / ny
                 r = getRay(cam, u, v)
-                col += rayColor(r, world, rec, tempRec)
+                col += rayColor(r, world, maxDepth, rec, tempRec)
             end
-            col /= ns
-            col *= 255.99
 
-            ir = round(Int, col[1])
-            ig = round(Int, col[2])
-            ib = round(Int, col[3])
-            println(io, ir, " ", ig, " ", ib)
+            writeColor(col, io, ns)
         end
     end
     close(io)

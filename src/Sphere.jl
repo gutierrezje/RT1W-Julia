@@ -3,6 +3,7 @@ include("Hittable.jl")
 struct Sphere <: Hittable
     center::Vec3
     radius::Float32
+    material::Material
 end
 
 function hit(s::Sphere, r::Ray, tMin, tMax, rec::HitRecord) ::Bool
@@ -17,14 +18,18 @@ function hit(s::Sphere, r::Ray, tMin, tMax, rec::HitRecord) ::Bool
         if temp < tMax && temp > tMin
             rec.t = temp
             rec.p = pointAt(r, rec.t)
-            rec.normal = (rec.p - s.center) / s.radius
+            outwardNormal = (rec.p - s.center) / s.radius
+            setFaceNormal(rec, r, outwardNormal)
+            rec.material = s.material
             return true
         end
         temp = (-b + root) / a
         if (temp < tMax && temp > tMin)
             rec.t = temp
             rec.p = pointAt(r, rec.t)
-            rec.normal = (rec.p - s.center) / s.radius
+            outwardNormal = (rec.p - s.center) / s.radius
+            setFaceNormal(rec, r, outwardNormal)
+            rec.material = s.material
             return true
         end
     end
