@@ -3,8 +3,8 @@ include("HittableList.jl")
 include("Sphere.jl")
 include("Camera.jl")
 
-function rayColor(r::Ray, world::Hittable, depth, rec::HitRecord, tempRec::HitRecord) ::Vec3
-    #rec = HitRecord()
+function rayColor(r::Ray, world::Hittable, depth,
+        rec::HitRecord, tempRec::HitRecord) ::Vec3
     if depth <= 0
         return Vec3(0.0)
     end
@@ -23,29 +23,29 @@ function rayColor(r::Ray, world::Hittable, depth, rec::HitRecord, tempRec::HitRe
 end
 
 function main()
-    nx, ny = 200, 100
+    imageWidth, imageHeight = 200, 100
     ns = 100
     maxDepth = 50
     io = open("images/chapter11.ppm", "w")
-    println(io, "P3\n", nx, " ", ny, "\n255\n")
+    println(io, "P3\n", imageWidth, " ", imageHeight, "\n255\n")
 
     world = HittableList()
-    push!(world, Sphere(Vec3(0.0,0.0,-1.0), 0.5, Lambertian(Vec3(0.1, 0.2, 0.5))))
-    push!(world, Sphere(Vec3(0.0,-100.5, -1.0), 100, Lambertian(Vec3(0.8, 0.8, 0.0))))
+    push!(world, Sphere(Vec3(0, 0, -1), 0.5, Lambertian(Vec3(0.1, 0.2, 0.5))))
+    push!(world, Sphere(Vec3(0, -100.5, -1), 100, Lambertian(Vec3(0.8, 0.8, 0.0))))
+    push!(world, Sphere(Vec3(1, 0, -1), 0.5, Metal(Vec3(0.8, 0.6, 0.2), 0.0)))
+    push!(world, Sphere(Vec3(-1, 0, -1), 0.5, Dielectric(1.5)))
+    push!(world, Sphere(Vec3(-1, 0, -1), -0.45, Dielectric(1.5)))
 
-    push!(world, Sphere(Vec3(1.0,0.0,-1.0), 0.5, Metal(Vec3(0.8, 0.6, 0.2), 0.0)))
-    push!(world, Sphere(Vec3(-1.0,0.0,-1.0), 0.5, Dielectric(1.5)))
-    push!(world, Sphere(Vec3(-1.0,0.0,-1.0), -0.45, Dielectric(1.5)))
-
-    cam = Camera()
+    aspectRatio = imageWidth / imageHeight
+    cam = Camera(Vec3(-2,2,1), Vec3(0,0,-1),Vec3(0,1,0), 20, aspectRatio)
     # Preallocating since mutable structs take a lot of memory
     rec = HitRecord()
     tempRec = HitRecord()
-    for j = ny:-1:1
-        for i = 1:nx
+    for j = imageHeight:-1:1
+        for i = 1:imageWidth
             col = Vec3(0.0)
             for _ = 1:ns
-                u, v = (i + rand()) / nx, (j + rand()) / ny
+                u, v = (i + rand()) / imageWidth, (j + rand()) / imageHeight
                 r = getRay(cam, u, v)
                 col += rayColor(r, world, maxDepth, rec, tempRec)
             end

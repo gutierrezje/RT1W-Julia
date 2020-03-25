@@ -6,7 +6,7 @@ struct Vec3
     ## Constructors
     Vec3() = new(SVector{3, Float32}(0.0, 0.0, 0.0))
     Vec3(x, y, z) = new(SVector{3, Float32}(x, y, z))
-    Vec3(n::AbstractFloat) = new(SVector{3, Float32}(n, n, n))
+    Vec3(n::Number) = new(SVector{3, Float32}(n, n, n))
     Vec3(v::SVector{3}) = new(v)
 end
 

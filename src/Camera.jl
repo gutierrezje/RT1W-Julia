@@ -12,6 +12,22 @@ struct Camera
         Vec3( 0.0,  2.0,  0.0),
         Vec3( 0.0,  0.0,  0.0)
     )
+
+    function Camera(lookFrom::Vec3, lookAt::Vec3, vUp::Vec3, vfov, aspect)
+        θ = deg2rad(vfov)
+        halfHeight = tan(θ/2)
+        halfWidth = aspect * halfHeight
+        w = unitVector(lookFrom - lookAt)
+        u = unitVector(vUp × w)
+        v = w × u
+
+        return new(
+            lookFrom - halfWidth*u - halfHeight*v - w,
+            2*halfWidth*u,
+            2*halfHeight*v,
+            lookFrom
+        )
+    end
 end
 
 function getRay(c::Camera, u, v) ::Ray

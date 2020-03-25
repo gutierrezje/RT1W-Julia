@@ -12,11 +12,10 @@ size(hl::HittableList) = size(hl.objects)[1]
 push!(hl::HittableList, v::Hittable) = push!(hl.objects, v)
 
 function hit(hl::HittableList, r::Ray, tMin, tMax, rec::HitRecord, tempRec::HitRecord)
-    #tempRec = HitRecord()
     hitAnything = false
     closestSoFar = tMax
 
-    for i in 1:size(hl)
+    for i = 1:size(hl)
         if hit(hl[i], r, tMin, closestSoFar, tempRec)
             hitAnything = true
             closestSoFar = tempRec.t
