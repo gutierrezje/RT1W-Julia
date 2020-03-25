@@ -1,6 +1,6 @@
 using StaticArrays, Distributions
 import LinearAlgebra: (⋅), (×)
-import Base: (-), (+), (*), (/), getindex, show
+import Base: (-), (+), (*), (/), getindex, length, show
 struct Vec3
     e::SVector{3, Float32}
     ## Constructors
@@ -15,6 +15,7 @@ x(v::Vec3) = v.e[1]
 y(v::Vec3) = v.e[2]
 z(v::Vec3) = v.e[3]
 getindex(v::Vec3, i::Int) = v.e[i]
+getindex(v::Vec3, r::UnitRange{Int}) = v.e[r]
 
 ## Negation operator
 (-)(v::Vec3) = Vec3(-v.e)
@@ -36,11 +37,12 @@ length(v::Vec3) = √(v.e[1] * v.e[1] + v.e[2] * v.e[2] + v.e[3] * v.e[3])
 squaredLength(v::Vec3) = v.e[1] * v.e[1] + v.e[2] * v.e[2] + v.e[3] * v.e[3]
 normalize!(v::Vec3) = v.e / length(v)
 unitVector(v::Vec3) = Vec3(v.e / length(v))
+
 reflect!(v::Vec3, n::Vec3) = v - 2(v ⋅ n)*n
 function refract(uv::Vec3, n::Vec3, etaOverEtap)
-    cosθ = (-uv) ⋅ n
+    cosθ = min((-uv) ⋅ n, 1.0)
     rPar = etaOverEtap * (uv + cosθ*n)
-    rPerp = -√(1.0 - squaredLength(rPar) + 1e-6) * n
+    rPerp = -√(1.0 - squaredLength(rPar)) * n
     return rPar + rPerp
 end
 
@@ -65,7 +67,15 @@ function randomUnitVector()
     return Vec3(r*cos(a), r*sin(a), z)
 end
 
-show(io::IO, v::Vec3) = print(io, "$(v[1]) $(v[2]) $(v[3])")
+function randomInUnitDisk()
+    while true
+        p = Vec3(rangeRand(-1,1), rangeRand(-1,1), 0)
+        if (squaredLength(p) >= 1) continue end
+        return p
+    end
+end
+
+## IO
 function writeColor(v::Vec3, io::IOStream, samplesPerPixel)
     scale = 1.0 / samplesPerPixel
 

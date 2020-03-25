@@ -13,6 +13,6 @@ mutable struct HitRecord <: Record
 end
 
 @inline function setFaceNormal(rec::HitRecord, r::Ray, outwardNormal::Vec3)
-    rec.frontFace = direction(r) ⋅ outwardNormal < 0
+    rec.frontFace = (direction(r) ⋅ outwardNormal) < 0.0
     rec.normal = rec.frontFace ? outwardNormal : -outwardNormal
 end
