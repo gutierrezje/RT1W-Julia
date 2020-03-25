@@ -1,6 +1,6 @@
 include("Vec3.jl")
 
-struct Ray
+mutable struct Ray
     orig::Vec3
     dir::Vec3
     Ray() = new(Vec3(), Vec3())

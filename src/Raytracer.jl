@@ -1,18 +1,18 @@
-using FileIO, DelimitedFiles
+using FileIO
 include("HittableList.jl")
 include("Sphere.jl")
 include("Camera.jl")
 
-function rayColor(r::Ray, world::Hittable, depth,
+function rayColor!(r::Ray, world::Hittable, depth,
         rec::HitRecord, tempRec::HitRecord) ::Vec3
     if depth <= 0
         return Vec3(0.0)
     end
 
     if hit(world, r, 0.001, typemax(Float32), rec, tempRec)
-        scattered, attenuation, isScattered = scatter(rec.material, r, rec)
+        attenuation, isScattered = scatter(rec.material, r, rec)
         if isScattered
-            return attenuation * rayColor(scattered, world, depth-1, rec, tempRec)
+            return attenuation * rayColor!(r, world, depth-1, rec, tempRec)
         end
         return Vec3(0.0)
     end
@@ -27,8 +27,8 @@ function randomScene()
 
     push!(world, Sphere(Vec3(0, -1000, 0), 1000, Lambertian(Vec3(0.5, 0.5, 0.5))))
 
-    for a = -5:5
-        for b = -5:5
+    for a = -6:6
+        for b = -11:11
             chooseMat = rand()
             center = Vec3(a + 0.9 * rand(), 0.2, b + 0.9*rand())
             if length(center - Vec3(4, 0.2, 0)) > 0.9
@@ -56,10 +56,10 @@ function randomScene()
 end
 
 function main()
-    imageWidth, imageHeight = 960, 720
+    imageWidth, imageHeight = 1280, 720
     ns = 100
     maxDepth = 50
-    io = IOBuffer()
+    io = open("images/chapter13.ppm", "w")
     println(io, "P3\n", imageWidth, " ", imageHeight, "\n255\n")
 
     world = randomScene()
@@ -73,22 +73,18 @@ function main()
     # Preallocating since mutable structs take a lot of memory
     rec = HitRecord()
     tempRec = HitRecord()
+    r = Ray()
     for j = imageHeight:-1:1
-        rowPix = Array{Int}(undef, (imageWidth, 3))
         for i = 1:imageWidth
             col = Vec3(0.0)
             for _ = 1:ns
                 u, v = (i + rand()) / imageWidth, (j + rand()) / imageHeight
-                r = getRay(cam, u, v)
-                col += rayColor(r, world, maxDepth, rec, tempRec)
+                getRay!(r, cam, u, v)
+                col += rayColor!(r, world, maxDepth, rec, tempRec)
             end
 
-            addPix!(rowPix, i, col, ns)
+            writeColor(col, io, ns)
         end
-        writedlm(io, rowPix, " ")
-    end
-    open("images/test.ppm", "w") do f
-        write(f, take!(io))
     end
     close(io)
 end

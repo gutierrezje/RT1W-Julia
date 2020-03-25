@@ -8,9 +8,10 @@ end
 
 function scatter(m::Lambertian, rIn::Ray, rec::Record)
     scatterDirection = rec.normal + randomUnitVector()
-    scattered = Ray(rec.p, scatterDirection)
+    rIn.orig = rec.p
+    rIn.dir = scatterDirection
     attenuation = m.albedo
-    return (scattered, attenuation, true)
+    return (attenuation, true)
 end
 
 struct Metal <: Material
@@ -20,10 +21,11 @@ end
 
 function scatter(m::Metal, rIn::Ray, rec::Record)
     reflected = reflect!(unitVector(direction(rIn)), rec.normal)
-    scattered = Ray(rec.p, reflected + m.fuzz*randomInUnitSphere())
+    rIn.orig = rec.p
+    rIn.dir = reflected + m.fuzz*randomInUnitSphere()
     attenuation = m.albedo
-    isScattered = (direction(scattered) ⋅ rec.normal) > 0
-    return (scattered, attenuation, isScattered)
+    isScattered = (direction(rIn) ⋅ rec.normal) > 0
+    return (attenuation, isScattered)
 end
 
 struct Dielectric <: Material
@@ -40,20 +42,23 @@ function scatter(m::Dielectric, rIn::Ray, rec::Record)
     if etaOverEtap * sinθ > 1.0
         # Must reflect
         reflected = reflect!(unitDirection, rec.normal)
-        scattered = Ray(rec.p, reflected)
-        return (scattered, attenuation, true)
+        rIn.orig = rec.p
+        rIn.dir = reflected
+        return (attenuation, true)
     end
     reflectProb = schlick(cosθ, etaOverEtap)
     if rand() < reflectProb
         reflected = reflect!(unitDirection, rec.normal)
-        scattered = Ray(rec.p, reflected)
-        return (scattered, attenuation, true)
+        rIn.orig = rec.p
+        rIn.dir = reflected
+        return (attenuation, true)
     end
 
     # Can refract
     refracted = refract(unitDirection, rec.normal, etaOverEtap)
-    scattered = Ray(rec.p, refracted)
-    return (scattered, attenuation, true)
+    rIn.orig = rec.p
+    rIn.dir = refracted
+    return (attenuation, true)
 end
 
 function schlick(cosine, refractIdx)

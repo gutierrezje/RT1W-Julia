@@ -41,8 +41,10 @@ unitVector(v::Vec3) = Vec3(v.e / length(v))
 reflect!(v::Vec3, n::Vec3) = v - 2(v ⋅ n)*n
 function refract(uv::Vec3, n::Vec3, etaOverEtap)
     cosθ = min((-uv) ⋅ n, 1.0)
+    #@assert squaredLength(uv) <= 1.0 "$(squaredLength(uv)) $etaOverEtap $(squaredLength(n))"
     rPar = etaOverEtap * (uv + cosθ*n)
-    rPerp = -√(1.0 - squaredLength(rPar)) * n
+    #@assert squaredLength(rPar) <= 1.0 "$(squaredLength(rPar))  $etaOverEtap $(squaredLength(n))"
+    rPerp = -√(1.0 - min(1.0, squaredLength(rPar))) * n
     return rPar + rPerp
 end
 

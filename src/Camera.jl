@@ -30,10 +30,10 @@ struct Camera
     end
 end
 
-function getRay(c::Camera, s, t) ::Ray
+function getRay!(r::Ray, c::Camera, s, t)
     rd = c.lensRadius * randomInUnitDisk()
     offset = c.u * x(rd) + c.v * y(rd)
-
-    return Ray(c.origin + offset,
-        c.lowerLeftCorner + s*c.horizontal + t*c.vertical - c.origin - offset)
+    r.orig = c.origin + offset
+    r.dir = c.lowerLeftCorner + s*c.horizontal + t*c.vertical - c.origin - offset
+    nothing
 end
