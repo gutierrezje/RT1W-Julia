@@ -89,19 +89,6 @@ function main()
     close(io)
 end
 
-function addPix!(row, idx, v::Vec3, samplesPerPixel)
-    scale = 1.0 / samplesPerPixel
-
-    r = √(scale * v[1])
-    g = √(scale * v[2])
-    b = √(scale * v[3])
-
-    r = round(Int, 255.99 * r)
-    g = round(Int, 255.99 * g)
-    b = round(Int, 255.99 * b)
-    row[idx, 1:3] .= r, g, b
-end
-
 if abspath(PROGRAM_FILE) == @__FILE__
     main()
 end
